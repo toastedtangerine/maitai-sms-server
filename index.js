@@ -8,10 +8,17 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
-const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+
 app.post('/send', async (req, res) => {
-  const { to, body } = req.body;
-  await client.messages.create({ from: process.env.TWILIO_PHONE, to, body });
-  res.json({ ok: true });
+  try {
+    const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+    const { to, body } = req.body;
+    await client.messages.create({ from: process.env.TWILIO_PHONE, to, body });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
-app.listen(process.env.PORT || 3000);
+
+app.listen(process.env.PORT || 3000, () => console.log('Server ready'));
