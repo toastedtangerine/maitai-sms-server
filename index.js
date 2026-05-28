@@ -23,8 +23,9 @@ const CARRIERS = {
 app.post('/send', async (req, res) => {
   try {
     const { to, carrier, body } = req.body;
+    console.log(`Sending to ${to} via ${carrier}`);
     const domain = CARRIERS[carrier];
-    if (!domain) return res.status(400).json({ error: 'Unknown carrier' });
+    if (!domain) return res.status(400).json({ error: 'Unknown carrier: ' + carrier });
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -34,7 +35,12 @@ app.post('/send', async (req, res) => {
       },
     });
 
+    await transporter.verify();
+    console.log('Gmail auth verified');
+
     const emailAddress = to.replace(/\D/g, '').slice(-10) + domain;
+    console.log(`Sending email to ${emailAddress}`);
+
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: emailAddress,
@@ -42,9 +48,10 @@ app.post('/send', async (req, res) => {
       text: body,
     });
 
+    console.log('Email sent successfully');
     res.json({ ok: true, sent_to: emailAddress });
   } catch (err) {
-    console.error(err);
+    console.error('ERROR:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
